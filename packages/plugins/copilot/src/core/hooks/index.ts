@@ -12,12 +12,29 @@ import { HumanMessage } from 'langchain/schema';
 import type { ChatAI, ChatAIConfig } from '../chat';
 import { createChatAI } from '../chat';
 import type { IndexedDBChatMessageHistory } from '../langchain/message-history';
+import {
+  AIWAVE_BASE_URL,
+  DEFAULT_AIWAVE_MODEL,
+  DEFAULT_OPENAI_MODEL,
+} from '../openai-config';
 import { followupQuestionParser } from '../prompts/output-parser';
 
 export const openAIApiKeyAtom = atomWithStorage<string | null>(
   'com.affine.copilot.openai.token',
   null
 );
+
+export const openAIBaseUrlAtom = atomWithStorage<string | null>(
+  'com.affine.copilot.openai.base_url',
+  null
+);
+
+export const openAIModelNameAtom = atomWithStorage<string | null>(
+  'com.affine.copilot.openai.model',
+  null
+);
+
+export { AIWAVE_BASE_URL, DEFAULT_AIWAVE_MODEL, DEFAULT_OPENAI_MODEL };
 
 const conversationBaseWeakMap = new WeakMap<
   ConversationChain,
@@ -30,6 +47,8 @@ const conversationWeakMap = new WeakMap<
 
 export const chatAtom = atom<Promise<ChatAI>>(async get => {
   const openAIApiKey = get(openAIApiKeyAtom);
+  const baseUrl = get(openAIBaseUrlAtom);
+  const modelName = get(openAIModelNameAtom);
   if (!openAIApiKey) {
     throw new Error('OpenAI API key not set, chat will not work');
   }
@@ -41,9 +60,17 @@ export const chatAtom = atom<Promise<ChatAI>>(async get => {
       throw new Error('llmNewToken not set');
     },
   };
-  const chatAI = await createChatAI('default-copilot', openAIApiKey, {
-    events,
-  });
+  const chatAI = await createChatAI(
+    'default-copilot',
+    {
+      openAIApiKey,
+      baseUrl,
+      modelName: modelName ?? '',
+    },
+    {
+      events,
+    }
+  );
   getOrCreateConversationAtom(chatAI.conversationChain);
   const baseAtom = conversationBaseWeakMap.get(chatAI.conversationChain);
   if (!baseAtom) {
