@@ -10,6 +10,10 @@ import {
 } from 'langchain/prompts';
 
 import { IndexedDBChatMessageHistory } from './langchain/message-history';
+import {
+  type OpenAIClientConfig,
+  buildChatOpenAIFields,
+} from './openai-config';
 import { chatPrompt, followupQuestionPrompt } from './prompts';
 import { followupQuestionParser } from './prompts/output-parser';
 
@@ -31,24 +35,23 @@ export type ChatAIConfig = {
 
 export async function createChatAI(
   room: string,
-  openAIApiKey: string,
+  clientConfig: OpenAIClientConfig,
   config: ChatAIConfig
 ): Promise<ChatAI> {
-  if (!openAIApiKey) {
+  if (!clientConfig.openAIApiKey) {
     console.warn('OpenAI API key not set, chat will not work');
   }
+  const llmFields = buildChatOpenAIFields(clientConfig);
   const followup = new ChatOpenAI({
+    ...llmFields,
     streaming: false,
-    modelName: 'gpt-3.5-turbo',
     temperature: 0.5,
-    openAIApiKey: openAIApiKey,
   });
 
   const chat = new ChatOpenAI({
+    ...llmFields,
     streaming: true,
-    modelName: 'gpt-3.5-turbo',
     temperature: 0.5,
-    openAIApiKey: openAIApiKey,
     callbacks: [
       {
         async handleLLMStart() {

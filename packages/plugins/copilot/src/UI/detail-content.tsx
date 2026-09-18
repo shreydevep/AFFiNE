@@ -66,7 +66,12 @@ const DetailContentImpl = () => {
 export const DetailContent = (): ReactElement => {
   const key = useAtomValue(openAIApiKeyAtom);
   if (!key) {
-    return <span>Please set OpenAI API Key in the debug panel.</span>;
+    return (
+      <span>
+        Set an API key in the Copilot debug panel (OpenAI or an OpenAI-compatible
+        gateway such as AIWave).
+      </span>
+    );
   }
   return <DetailContentImpl />;
 };
